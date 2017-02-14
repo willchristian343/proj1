@@ -1,0 +1,71 @@
+
+
+import socket
+import sys
+import string
+
+setTimeout = 5
+setAttempts = 5
+
+def usage():
+    print 'Follow Input Format: smsclientUDP <hostName> <PORT(1024-49151)> <filename(.txt)>'
+    sys.exit()
+
+def beginClient():
+    #Initialize ByteStream TCP Socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        hostIP = socket.gethostbyname(hostName)
+        print "Host IP Found"
+    except socket.gaierror:
+        print "ERROR: Failed to find the host IP, closing socket."
+        sock.close()
+        sys.exit()
+    server = (hostIP, PORT)
+    #Try to connect to server
+    try:
+        sock.connect(server)
+        print "Socket successfully connected to: " + hostName
+    except socket.error:
+        print "ERROR: Failed to connect, closing socket."
+        sock.close()
+        sys.exit()
+    #Try to send message to Server
+    try:
+        sock.send(message)
+    except socket.error:
+        print "ERROR: Failed to send message, closing socket."
+        sock.close()
+        sys.exit()
+
+    #Catch response from Server
+    resp = ""
+    try:
+        resp = sock.recv(4096)
+    except socket.error:
+        print "ERROR: Failed to receieve Server response, closing socket."
+        sock.close()
+        sys.exit()
+    print "Server response: \n", resp
+    sock.close()
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if len(args) != 3:
+        usage()
+    hostName = args[0]
+    PORT = (int)(args[1])
+    fileName = args[2]
+    if fileName == None or fileName[-4:] != '.txt' or PORT == None or PORT not in range(1024, 49151):
+        usage()
+    message = ""
+    try:
+        thisFile = open(fileName, 'r')
+        for i in thisFile:
+            i = i.replace('\n', "")
+            message += (str)(i)
+        thisFile.close()
+    except IOError, err:
+        print "ERROR: Could not open file ", err
+        sys.exit()
+    beginClient()

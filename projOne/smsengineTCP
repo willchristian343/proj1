@@ -1,0 +1,78 @@
+import socket
+import sys
+import string
+
+def usage():
+    print 'Follow Input Format: smsengineUDP <PORT(1024-49151)> <filename(.txt)>'
+    sys.exit()
+
+def beginServer():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #Try to bind socket and PORT
+    try:
+        hostName = socket.gethostbyname(socket.gethostname())
+        server = (hostName, PORT)
+        sock.bind(server)
+    except socket.error:
+        print "ERROR: Failed to bind socket."
+        sys.exit()
+    #Listen on PORT
+    try:
+        sock.listen(10)
+        print "Listening on PORT " + str(PORT)
+    except socket.error:
+        print "Failed in receiveing any communication on this PORT"
+        sys.exit()
+    while 2 > 1:
+        conn, client = sock.accept()
+        msg = ""
+        msg = conn.recv(4096)
+        if (len(msg) == 0):
+            completeResponse = "0 -1 ERROR"
+        else:
+
+            msg = msg.translate(None, string.punctuation)
+            cleanMsg = msg.split(" ")
+            spamCnt = 0.0
+            spamResponse = ""
+            sendResp = True
+            for w in cleanMsg:
+                try:
+                    w.decode('ascii')
+                    if w.lower() in spamWords:
+                        spamCnt += 1
+                        spamResponse = spamResponse + " " + w
+                except:
+                    completeResponse = "0 -1 ERROR"
+                    sendResp = False
+                    break
+            if sendResp is True:
+                msgLength = len(cleanMsg)
+                spamScore = spamCnt/msgLength
+                spamScore = (str)(spamScore)
+                spamCnt = (int)(spamCnt)
+                completeResponse = spamScore +" " + (str)(spamCnt) + spamResponse
+        try:
+            conn.sendall(completeResponse)
+        except socket.error:
+            print "ERROR: Failed to send response"
+        print "Response succeeded:\n", completeResponse
+    sock.close()
+
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if len(args) != 2:
+        usage()
+    PORT = (int)(args[0])
+    fileName = args[1]
+    if fileName == None or fileName[-4:] != '.txt' or PORT == None or PORT not in range(1024, 49151):
+        usage()
+    spamWords = []
+    thisFile = open(fileName, 'r')
+    for i in thisFile:
+        i = i.replace('\n', "")
+        spamWords.append((str)(i))
+    thisFile.close()
+    beginServer()

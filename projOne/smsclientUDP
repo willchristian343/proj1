@@ -1,0 +1,60 @@
+
+
+import socket
+import sys
+import string
+
+setTimeout = 5
+setAttempts = 5
+
+def usage():
+    print 'Follow Input Format: smsclientUDP <hostName> <PORT(1024-49151)> <filename(.txt)>'
+    sys.exit()
+
+def beginClient():
+    #Initialize a UDP Datagram Socket and get the Host IP address
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        hostIP = socket.gethostbyname(hostName)
+    except sockt.gaierror:
+        print "ERROR: The host IP could not be found"
+        sys.exit()
+    server = (hostIP, PORT)
+    sock.settimeout(setTimeout)
+
+    #Try to send message to the server
+    try:
+        sent = sock.sendto(message, server)
+    except socket.error, err:
+        print "Message failed to send"
+
+    attempts = 1
+    resp = ""
+    hasResponded = False
+    while (not hasResponded) and attempts <= setAttempts:
+        resp, thisServer = sock.recvfrom(4096)
+        if resp:
+            hasResponded = True
+    print "Response from server: \n", resp
+    sock.close()
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if len(args) != 3:
+        usage()
+    hostName = args[0]
+    PORT = (int)(args[1])
+    fileName = args[2]
+    if fileName == None or fileName[-4:] != '.txt' or PORT == None or PORT not in range(1024, 49151):
+        usage()
+    message = ""
+    try:
+        thisFile = open(fileName, 'r')
+        for i in thisFile:
+            i = i.replace('\n', "")
+            message += (str)(i)
+        thisFile.close()
+    except IOError, err:
+        print "ERROR: Could not open file ", err
+        sys.exit()
+    beginClient()

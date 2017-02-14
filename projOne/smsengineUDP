@@ -1,0 +1,72 @@
+import socket
+import sys
+import string
+
+def usage():
+    print 'Follow Input Format: smsengineUDP <PORT(1024-49151)> <filename(.txt)>'
+    sys.exit()
+
+def beginServer():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    hostName = socket.gethostbyname(socket.gethostname())
+    server = (hostName, PORT)
+    try:
+        sock.bind(server)
+        print "Binded successfully"
+    except socket.error:
+        print "ERROR: Failed to bind."
+        sys.exit()
+    while 2 > 1:
+        resp = ""
+        try:
+            msg, client = sock.recvfrom(4096)
+        except socket.error:
+            print "ERROR: Failed to receive request"
+            continue
+        if (len(msg) == 0):
+            completeResponse = "0 -1 ERROR"
+        else:
+            msg = msg.translate(None, string.punctuation)
+            msgs = msg.split(" ")
+            spamCnt = 0.0
+            spamResponse = ""
+            sendResp = True
+            for w in msgs:
+                try:
+                    w.decode('ascii')
+                    if w.lower() in spam:
+                        spamCnt += 1
+                        spamResponse += " " + w
+                except:
+                    completeResponse = "0 -1 ERROR"
+                    sendResp = False
+                    break
+            if sendResp:
+                spamScore = spamCnt/len(msgs)
+                spamScore = (str)(spamScore)
+                spamCnt = (int)(spamCnt)
+                completeResponse = spamScore +" " + (str)(spamCnt) + spamResponse
+        try:
+            sent = sock.sendto(completeResponse, client)
+        except socket.error:
+            print "ERROR: Failed to send response"
+            continue
+        print "Response succeeded:\n", completeResponse
+
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if len(args) != 2:
+        usage()
+    PORT = (int)(args[0])
+    fileName = args[1]
+    if fileName == None or fileName[-4:] != '.txt' or PORT == None or PORT not in range(1024, 49151):
+        usage()
+    spam = []
+    thisFile = open(fileName, 'r')
+    for i in thisFile:
+        i = i.replace('\n', "")
+        spam.append((str)(i))
+    thisFile.close()
+    beginServer()
